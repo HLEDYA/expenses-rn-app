@@ -3,6 +3,8 @@ import { View, StyleSheet } from "react-native";
 import IconButton from "../components/UI/IconButton";
 import Button from "../components/UI/Button";
 import { GlobalStyles } from "../constants/styles";
+import { useDispatch } from "react-redux";
+import { removeExpense, updateExpense, addExpense } from "../store/expenses";
 
 const ManageExpense = ({ route, navigation }) => {
   const editedExpenseId = route.params?.expenseId;
@@ -14,13 +16,33 @@ const ManageExpense = ({ route, navigation }) => {
     });
   }, [navigation, isEditing]);
 
+  const dispatch = useDispatch();
+
   const deleteExpenseHandler = () => {
+    dispatch(removeExpense({ id: editedExpenseId }));
     navigation.goBack();
   };
   const cancelHandler = () => {
     navigation.goBack();
   };
   const confirmHandler = () => {
+    if (isEditing) {
+      const expense = {
+        description: "Test Update",
+        amount: 9.99,
+        date: "2022-11-19",
+      };
+      dispatch(updateExpense({ id: editedExpenseId, expense: expense }));
+    } else {
+      const id = Math.random.toString();
+      const expense = {
+        id: id,
+        description: "Test Add",
+        amount: 19.33,
+        date: "2022-11-20",
+      };
+      dispatch(addExpense({ expense: expense }));
+    }
     navigation.goBack();
   };
 
