@@ -66,6 +66,9 @@ const expensesSlice = createSlice({
     addExpense: (state, action) => {
       state.expenses.push(action.payload.expense);
     },
+    setExpenses: (state, action) => {
+      state.expenses = action.payload.expenses.reverse(); // to show recent at top
+    },
     removeExpense: (state, action) => {
       console.log(action.payload.id);
       state.expenses = state.expenses.filter(
@@ -87,5 +90,6 @@ const expensesSlice = createSlice({
 
 export default expensesSlice.reducer;
 export const addExpense = expensesSlice.actions.addExpense;
+export const setExpenses = expensesSlice.actions.setExpenses;
 export const removeExpense = expensesSlice.actions.removeExpense;
 export const updateExpense = expensesSlice.actions.updateExpense;

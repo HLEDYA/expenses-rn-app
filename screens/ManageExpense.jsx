@@ -1,4 +1,4 @@
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import IconButton from "../components/UI/IconButton";
 
@@ -7,10 +7,15 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { removeExpense, updateExpense, addExpense } from "../store/expenses";
 import ExpenseForm from "../components/ManageExpense/ExpenseForm";
+import * as http from "../utils/http";
+import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 
 const ManageExpense = ({ route, navigation }) => {
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState()
 
   const expenses = useSelector((state) => state.expensesReducer.expenses);
 
@@ -26,26 +31,50 @@ const ManageExpense = ({ route, navigation }) => {
 
   const dispatch = useDispatch();
 
+  const errorConfirmHandler = () =>{
+    setError(null)
+  }
+
   const deleteExpenseHandler = () => {
-    dispatch(removeExpense({ id: editedExpenseId }));
-    navigation.goBack();
+    setIsLoading(true)
+    try {
+      http.deleteExpense(editedExpenseId)
+      dispatch(removeExpense({ id: editedExpenseId }));
+      navigation.goBack();
+    } catch (err){
+      setError("Could not delete the expense. Please try later!")
+    }
+    setIsLoading(false)    
   };
   const cancelHandler = () => {
     navigation.goBack();
   };
-  const confirmHandler = (expenseData) => {
-    if (isEditing) {
-      dispatch(updateExpense({ id: editedExpenseId, expense: expenseData }));
-    } else {
-      const id = Math.random.toString();
-      const expense = {
-        id: id,
-        ...expenseData,
-      };
-      dispatch(addExpense({ expense: expense }));
+  const confirmHandler = async (expenseData) => {
+    setIsLoading(true)
+    try{
+      if (isEditing) {
+        dispatch(updateExpense({ id: editedExpenseId, expense: expenseData }));
+        http.updateExpense(editedExpenseId, expenseData)
+      } else {
+        const id = await http.storeExpense(expenseData)
+        const expense = {id, ...expenseData};
+        dispatch(addExpense({ expense }));
+      }
+      navigation.goBack();
+    } catch (err) {
+      setError("Could not save data, please try again later")
     }
-    navigation.goBack();
+    setIsLoading(false)
+    
   };
+
+  if (isLoading){
+    return <LoadingOverlay/>
+  }
+
+  if (error) {
+    return <ErrorOverlay message={error} onConfirm={errorConfirmHandler}/>
+  }
 
   return (
     <View style={styles.container}>
